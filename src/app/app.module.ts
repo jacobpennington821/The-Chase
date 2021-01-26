@@ -1,32 +1,22 @@
-import { BrowserModule } from '@angular/platform-browser';
+import { HttpClientModule } from '@angular/common/http';
 import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { HttpModule } from '@angular/http';
+import { BrowserModule } from '@angular/platform-browser';
+
+import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { ServerComponent } from './server/server.component';
-import { ServersComponent } from './servers/servers.component';
-import { SuccessAlertComponent } from './successAlert/successAlert.component';
-import { WarningAlertComponent } from './warning-alert/warning-alert.component';
-import { DataBindingComponent } from './data-binding/data-binding.component';
+import { RoundOneComponent } from './round-one/round-one.component';
 import { CountdownTimerComponent } from './timer/timer.component';
-import { RoundOneComponent } from './round-one/round-one.component'
 
 @NgModule({
   declarations: [
     AppComponent,
-    ServerComponent,
-    ServersComponent,
-    SuccessAlertComponent,
-    WarningAlertComponent,
-    DataBindingComponent,
+    RoundOneComponent,
     CountdownTimerComponent,
-    RoundOneComponent
-    
   ],
   imports: [
     BrowserModule,
-    FormsModule,
-    HttpModule
+    AppRoutingModule,
+    HttpClientModule
   ],
   providers: [],
   bootstrap: [AppComponent]
