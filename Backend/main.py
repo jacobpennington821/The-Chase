@@ -6,8 +6,9 @@ import string
 import websockets
 
 from game.game import Game
+from states.HomeState import HomeState
 
-logging.basicConfig()
+logging.basicConfig(level=logging.DEBUG)
 
 class ChaseServer:
 
@@ -16,10 +17,12 @@ class ChaseServer:
     def __init__(self):
         self.games = {}
         self.used_game_codes = set()
-        self.orphan_sockets = set()
+        self.sockets_to_games = {}
+        self.sockets_to_state = {}
 
     def register_new_socket(self, socket):
-        self.orphan_sockets.add(socket)
+        self.sockets_to_games[socket] = None
+        self.sockets_to_state[socket] = HomeState(socket)
 
     async def serve(self, socket, path):
         self.register_new_socket(socket)
@@ -27,7 +30,7 @@ class ChaseServer:
             async for message in socket:
                 await self.handle_message(socket, message)
         finally:
-            self.orphan_sockets.remove(socket)
+            del self.sockets_to_games[socket]
 
     def create_new_game_code(self):
         code_is_unique = False
