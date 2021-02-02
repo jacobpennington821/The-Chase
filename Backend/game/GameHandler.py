@@ -1,5 +1,8 @@
-from typing import Union
-from game.Game import Game
+from __future__ import annotations
+
+from typing import Union, TYPE_CHECKING
+if TYPE_CHECKING:
+    from game.Game import Game
 
 class GameHandler:
 
@@ -14,5 +17,5 @@ class GameHandler:
             game = game.code
         del self.games[game]
 
-    def get_game_with_code(self, code: str):
+    def get_game_with_code(self, code: str) -> Game:
         return self.games.get(code, None)

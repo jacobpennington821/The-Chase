@@ -1,34 +1,36 @@
+from __future__ import annotations
 import abc
-import websockets
 import json
-
 import logging
+from typing import Any, Awaitable, Callable, Dict, TYPE_CHECKING
+if TYPE_CHECKING:
+    from game.Client import Client
 
 class InvalidMessage(Exception):
     pass
 
 class AbstractState(abc.ABC):
 
-    actions = {}
-
-    def __init__(self, socket: websockets.client):
-        self.socket = socket
+    actions: Dict[str, Callable[[Any, Client], Awaitable[AbstractState]]] = {}
     
-    async def handle_string(self, string: str):
+    @classmethod
+    async def handle_string(cls, string: str, client: Client) -> AbstractState:
         try:
             data = json.loads(string)
-            await self.handle_message(data)
+            return await cls.handle_message(data, client)
         except ValueError:
             logging.error(f"Non JSON data received: {string}")
 
-    async def handle_message(self, msg):
+    @classmethod
+    async def handle_message(cls, msg, client: Client) -> AbstractState:
         try:
-            self.validate_message(msg)
-            if msg["action"] not in self.actions:
-                logging.error(f"Tried to perform non-existent action {msg['action']} in state {self.__class__.__name__}")
-            
-            logging.info(f"Running action {msg['action']} on state {self.__class__.__name__}")
-            self.actions[msg["action"]](self, msg)
+            cls.validate_message(msg)
+            if msg["action"] not in cls.actions:
+                logging.error(f"Tried to perform non-existent action {msg['action']} in state {cls.__name__}")
+                return cls()
+
+            logging.info(f"Running action {msg['action']} on state {cls.__name__}")
+            return await cls.actions[msg["action"]](msg, client)
         except InvalidMessage:
             logging.error(f"Malformed event: {msg}")
 

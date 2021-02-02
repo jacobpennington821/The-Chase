@@ -10,7 +10,7 @@ class RoomCodeHandler:
 
     def create_new_game_code(self) -> str:
         code_is_unique = False
-        code = None
+        code = ""
         while not code_is_unique:
             code = "".join(random.choices(string.ascii_uppercase, k=self.LOBBY_CODE_LENGTH))
             code_is_unique = not self.is_code_in_use(code)
