@@ -2,7 +2,7 @@ from __future__ import annotations
 import abc
 import json
 import logging
-from typing import Any, Awaitable, Callable, Dict, TYPE_CHECKING
+from typing import Any, Awaitable, Callable, Dict, TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from client.Client import Client
 
@@ -11,10 +11,18 @@ class InvalidMessage(Exception):
 
 class AbstractState(abc.ABC):
 
-    actions: Dict[str, Callable[[Any, Client], Awaitable[AbstractState]]] = {}
-    
+    actions: Dict[str, Callable[[Any, Client], Awaitable[Union[AbstractState, None]]]] = {}
+
     @classmethod
-    async def handle_string(cls, string: str, client: Client) -> AbstractState:
+    async def enter_state(cls):
+        logging.debug(f"Entering state {cls.__name__}")
+
+    @classmethod
+    async def exit_state(cls):
+        logging.debug(f"Exiting state {cls.__name__}")
+
+    @classmethod
+    async def handle_string(cls, string: str, client: Client) -> Union[AbstractState, None]:
         try:
             data = json.loads(string)
             return await cls.handle_message(data, client)
@@ -22,7 +30,7 @@ class AbstractState(abc.ABC):
             logging.error(f"Non JSON data received: {string}")
 
     @classmethod
-    async def handle_message(cls, msg, client: Client) -> AbstractState:
+    async def handle_message(cls, msg, client: Client) -> Union[AbstractState, None]:
         try:
             cls.validate_message(msg)
             if msg["action"] not in cls.actions:

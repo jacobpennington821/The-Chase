@@ -24,7 +24,12 @@ class Client:
         self.current_game: Union[Game, None] = None
 
     async def handle_string(self, string: str):
-        self.state = await self.state.handle_string(string, self)
+        state = await self.state.handle_string(string, self)
+        # If there has been a state transition then do it
+        if state is not None:
+            await self.state.exit_state()
+            self.state = state
+            await self.state.enter_state()
 
     @property
     def is_hosting_game(self) -> bool:

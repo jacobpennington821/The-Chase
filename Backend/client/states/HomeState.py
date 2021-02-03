@@ -1,7 +1,7 @@
 from __future__ import annotations
 import logging
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from client.Client import Client
@@ -17,7 +17,7 @@ class InvalidLobbyJoinRequest(Exception):
 
 class HomeState(AbstractState):
     @classmethod
-    async def action_create_lobby(cls, msg, client: Client) -> AbstractState:
+    async def action_create_lobby(cls, msg, client: Client) -> Union[AbstractState, None]:
         code = client.room_code_handler.create_new_game_code()
         game = Game(code, client)
         logging.info(f"Created new lobby, code: {game.code}")
@@ -26,19 +26,19 @@ class HomeState(AbstractState):
         return HostingLobbyState()
 
     @classmethod
-    async def action_join_lobby(cls, msg, client: Client) -> AbstractState:
+    async def action_join_lobby(cls, msg, client: Client) -> Union[AbstractState, None]:
         try:
             code: str = cls.extract_received_code(msg)
             if client.is_in_game:
                 logging.error(
                     "Client tried to join a game while already in a game. This shouldn't be possible, states are probably messed up."
                 )
-                return cls()
+                return None
             client.game_handler.join_game(client, code)
             return GuestLobbyState()
         except InvalidLobbyJoinRequest as e:
             logging.error(e)
-            return cls()
+            return None
 
     @staticmethod
     def extract_received_code(msg) -> str:
