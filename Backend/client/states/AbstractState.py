@@ -4,7 +4,7 @@ import json
 import logging
 from typing import Any, Awaitable, Callable, Dict, TYPE_CHECKING
 if TYPE_CHECKING:
-    from game.Client import Client
+    from client.Client import Client
 
 class InvalidMessage(Exception):
     pass

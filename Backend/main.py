@@ -1,14 +1,16 @@
-from game.Client import Client
-from game.GameHandler import GameHandler
-from game.RoomCodeHandler import RoomCodeHandler
 import asyncio
 import logging
 import websockets
 
+from client.Client import Client
+from game.GameHandler import GameHandler
+from game.RoomCodeHandler import RoomCodeHandler
+
+
 logging.basicConfig(level=logging.DEBUG)
 
-class ChaseServer:
 
+class ChaseServer:
     def __init__(self):
         self.room_code_handler = RoomCodeHandler()
         self.game_handler = GameHandler()
@@ -16,9 +18,11 @@ class ChaseServer:
         self.sockets_to_clients = {}
 
     def register_new_socket(self, socket):
-        self.sockets_to_clients[socket] = Client(socket, self.room_code_handler, self.game_handler)
+        self.sockets_to_clients[socket] = Client(
+            socket, self.room_code_handler, self.game_handler
+        )
 
-    async def serve(self, socket, path):
+    async def serve(self, socket, _path):
         self.register_new_socket(socket)
         try:
             async for message in socket:
@@ -30,6 +34,7 @@ class ChaseServer:
         start_server = websockets.serve(self.serve, "0.0.0.0", 8484)
         asyncio.get_event_loop().run_until_complete(start_server)
         asyncio.get_event_loop().run_forever()
+
 
 if __name__ == "__main__":
     server = ChaseServer()

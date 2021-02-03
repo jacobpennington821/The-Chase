@@ -1,12 +1,23 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
-    from game.Client import Client
+    from client.Client import Client
+
 
 class Game:
-
     def __init__(self, code: str, host: Client):
         self.code: str = code
         self.host: Client = host
-        self.guests: List[Client] = []
+        self.guests: list[Client] = []
+
+    def join(self, client: Client) -> bool:
+        self.guests.append(client)
+        return True
+
+    @property
+    def num_clients(self) -> int:
+        if self.host is not None:
+            return len(self.guests) + 1
+        return len(self.guests)

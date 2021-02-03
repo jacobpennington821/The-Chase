@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from typing import Union, TYPE_CHECKING
+
 if TYPE_CHECKING:
     from game.Game import Game
+    from client.Client import Client
+
 
 class GameHandler:
-
     def __init__(self):
         self.games = {}
 
@@ -19,3 +21,8 @@ class GameHandler:
 
     def get_game_with_code(self, code: str) -> Game:
         return self.games.get(code, None)
+
+    def join_game(self, client: Client, game: Union[Game, str]):
+        if isinstance(game, str):
+            game = self.get_game_with_code(game)
+        game.join(client)

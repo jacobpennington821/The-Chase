@@ -1,4 +1,4 @@
-from states.AbstractState import AbstractState
+from client.states.AbstractState import AbstractState
 
 class LobbyState(AbstractState):
     pass
