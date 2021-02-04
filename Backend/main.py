@@ -12,14 +12,13 @@ logging.basicConfig(level=logging.DEBUG)
 
 class ChaseServer:
     def __init__(self):
-        self.room_code_handler = RoomCodeHandler()
         self.game_handler = GameHandler()
         self.games = {}
         self.sockets_to_clients = {}
 
     def register_new_socket(self, socket):
         self.sockets_to_clients[socket] = Client(
-            socket, self.room_code_handler, self.game_handler
+            socket, self.game_handler
         )
 
     async def serve(self, socket, _path):
@@ -28,6 +27,7 @@ class ChaseServer:
             async for message in socket:
                 await self.sockets_to_clients[socket].handle_string(message)
         finally:
+            await self.sockets_to_clients[socket].handle_disconnect()
             del self.sockets_to_clients[socket]
 
     def start_server(self):

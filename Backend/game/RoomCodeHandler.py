@@ -1,3 +1,4 @@
+import logging
 import random
 import string
 
@@ -22,4 +23,5 @@ class RoomCodeHandler:
         return code in self.used_room_codes
 
     def free_room_code(self, code: str):
+        logging.info("Freed room code %s", code)
         self.used_room_codes.remove(code)

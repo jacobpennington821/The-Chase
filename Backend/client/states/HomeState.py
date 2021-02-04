@@ -17,8 +17,8 @@ class InvalidLobbyJoinRequest(Exception):
 
 class HomeState(AbstractState):
     @classmethod
-    async def action_create_lobby(cls, msg, client: Client) -> Union[AbstractState, None]:
-        code = client.room_code_handler.create_new_game_code()
+    async def action_create_lobby(cls, msg, client: Client) -> Optional[AbstractState]:
+        code = client.game_handler.room_code_handler.create_new_game_code()
         game = Game(code, client)
         logging.info(f"Created new lobby, code: {game.code}")
         client.game_handler.add_game(game)
@@ -26,7 +26,7 @@ class HomeState(AbstractState):
         return HostingLobbyState()
 
     @classmethod
-    async def action_join_lobby(cls, msg, client: Client) -> Union[AbstractState, None]:
+    async def action_join_lobby(cls, msg, client: Client) -> Optional[AbstractState]:
         try:
             code: str = cls.extract_received_code(msg)
             if client.is_in_game:
@@ -34,8 +34,12 @@ class HomeState(AbstractState):
                     "Client tried to join a game while already in a game. This shouldn't be possible, states are probably messed up."
                 )
                 return None
-            client.game_handler.join_game(client, code)
-            return GuestLobbyState()
+            success = await client.game_handler.join_game(client, code)
+            if success:
+                return GuestLobbyState()
+            else:
+                await client.send({"status": "failed"})
+                return None
         except InvalidLobbyJoinRequest as e:
             logging.error(e)
             return None
