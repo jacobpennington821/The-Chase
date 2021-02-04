@@ -14,11 +14,11 @@ class AbstractState(abc.ABC):
     actions: Dict[str, Callable[[Any, Client], Awaitable[Union[AbstractState, None]]]] = {}
 
     @classmethod
-    async def enter_state(cls):
+    async def enter_state(cls, client: Client):
         logging.debug(f"Entering state {cls.__name__}")
 
     @classmethod
-    async def exit_state(cls):
+    async def exit_state(cls, client: Client):
         logging.debug(f"Exiting state {cls.__name__}")
 
     @classmethod
@@ -35,7 +35,7 @@ class AbstractState(abc.ABC):
             cls.validate_message(msg)
             if msg["action"] not in cls.actions:
                 logging.error(f"Tried to perform non-existent action {msg['action']} in state {cls.__name__}")
-                return cls()
+                return None
 
             logging.info(f"Running action {msg['action']} on state {cls.__name__}")
             return await cls.actions[msg["action"]](msg, client)

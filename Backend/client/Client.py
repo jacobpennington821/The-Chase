@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import json
 from typing import TYPE_CHECKING, Union
 from client.states.HomeState import HomeState
 
@@ -27,9 +29,16 @@ class Client:
         state = await self.state.handle_string(string, self)
         # If there has been a state transition then do it
         if state is not None:
-            await self.state.exit_state()
+            await self.state.exit_state(self)
             self.state = state
-            await self.state.enter_state()
+            await self.state.enter_state(self)
+
+    async def send(self, obj: Any):
+        try:
+            msg = json.dumps(obj)
+            await self.socket.send(msg)
+        except ValueError as e:
+            logging.error("Can't serialise %s" % e)
 
     @property
     def is_hosting_game(self) -> bool:

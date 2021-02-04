@@ -14,6 +14,7 @@ class Game:
 
     def join(self, client: Client) -> bool:
         self.guests.append(client)
+        client.current_game = self
         return True
 
     @property
