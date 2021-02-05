@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Union, TYPE_CHECKING
+from game.QuestionHandler import QuestionHandler
 
 from game.RoomCodeHandler import RoomCodeHandler
 
@@ -13,6 +14,7 @@ class GameHandler:
     def __init__(self):
         self.games: dict[str, Game] = {}
         self.room_code_handler: RoomCodeHandler = RoomCodeHandler()
+        self.question_handler: QuestionHandler = QuestionHandler()
 
     def add_game(self, game: Game):
         self.games[game.code] = game

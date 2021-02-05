@@ -32,8 +32,9 @@ class Client:
 
     async def change_state(self, state: AbstractState):
         await self.state.exit_state(self)
+        old_state = self.state
         self.state = state
-        await self.state.enter_state(self)
+        await self.state.enter_state(self, old_state)
 
     async def handle_disconnect(self):
         print("Disconnected " + str(self.socket))
