@@ -1,6 +1,6 @@
 from __future__ import annotations
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from client.states.RoundOneState import RoundOneStateNotSpotlit, RoundOneStateSpotlit
 
@@ -29,6 +29,7 @@ class HostingLobbyState(LobbyState):
             return RoundOneStateSpotlit()
         else:
             logging.error("Can't start game")
+            return None
 
     @classmethod
     async def handle_disconnect(cls, client: Client):
