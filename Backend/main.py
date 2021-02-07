@@ -7,7 +7,7 @@ from game.GameHandler import GameHandler
 from game.RoomCodeHandler import RoomCodeHandler
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 class ChaseServer:

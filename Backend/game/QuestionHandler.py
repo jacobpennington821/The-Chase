@@ -1,6 +1,6 @@
 import aiohttp
 import logging
-from typing import Deque
+from typing import Deque, Optional
 from game.Question import Question
 from collections import deque
 
@@ -13,6 +13,7 @@ class QuestionHandler:
         self.question_url = "https://opentdb.com/api.php"
         # TODO: Use a session token
         self.session_token = None
+        self.current_question: Optional[Question] = None
 
     async def get_next_question(self) -> Question:
         if len(self.question_buffer) == 0:
@@ -20,7 +21,8 @@ class QuestionHandler:
             if questions_added == 0:
                 logging.error("Buffer has been starved!!!")
 
-        return self.question_buffer.popleft()
+        self.current_question = self.question_buffer.popleft()
+        return self.current_question
 
     async def _fill_question_buffer(self) -> int:
         params = {

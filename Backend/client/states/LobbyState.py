@@ -1,13 +1,13 @@
 from __future__ import annotations
+import asyncio
 import logging
 from typing import TYPE_CHECKING, Optional
 
 from client.states.RoundOneState import RoundOneStateNotSpotlit, RoundOneStateSpotlit
+from client.states.AbstractState import AbstractState
 
 if TYPE_CHECKING:
     from client.Client import Client
-
-from client.states.AbstractState import AbstractState
 
 
 class LobbyState(AbstractState):
@@ -24,8 +24,9 @@ class HostingLobbyState(LobbyState):
     async def action_start_game(cls, msg, client: Client) -> Optional[AbstractState]:
         success = await client.current_game.start()
         if success:
-            for guest in client.current_game.guests:
-                await guest.change_state(RoundOneStateNotSpotlit())
+            if client.current_game.guests:
+                await asyncio.wait(
+                    [guest.change_state(RoundOneStateNotSpotlit()) for guest in client.current_game.guests])
             return RoundOneStateSpotlit()
         else:
             logging.error("Can't start game")
