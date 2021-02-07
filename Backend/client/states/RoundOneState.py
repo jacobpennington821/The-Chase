@@ -70,18 +70,15 @@ class RoundOneStateAnswering(RoundOneState):
             logging.error("Tried to enter %s state without being in a game???", cls.__name__)
             return
         current_question = client.current_game.question_handler.current_question
+        # TODO Fix race from spamming answer question before answer has been sent to everyone
         if msg["answer_index"] == current_question.correct_index:
-            pass
-        else:
-            pass
+            client.current_game.add_correct_round_1_answer(client)
         await client.current_game.send_to_all({
                 "action": "question_answered",
-                "correct_answer": current_question.correct_index})
+                "correct_answer": current_question.correct_index,
+                "round_1_score": client.current_game.get_client_round_1_score(client)})
         await cls.get_and_send_question(client.current_game)
 
 RoundOneStateAnswering.actions = {
     "answer_question": RoundOneStateAnswering.action_answer_question
 }
-
-class RoundOneStateAnswered(RoundOneState):
-    pass

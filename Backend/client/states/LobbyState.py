@@ -30,6 +30,7 @@ class HostingLobbyState(LobbyState):
             return RoundOneStateSpotlit()
         else:
             logging.error("Can't start game")
+            await client.send({"action": "start_game", "status": "failed"})
             return None
 
     @classmethod
