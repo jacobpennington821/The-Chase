@@ -14,7 +14,7 @@ class AbstractState(abc.ABC):
     actions: Dict[str, Callable[[Any, Client], Awaitable[Optional[AbstractState]]]] = {}
 
     @classmethod
-    async def enter_state(cls, client: Client, old_state: AbstractState):
+    async def enter_state(cls, client: Client, old_state: AbstractState) -> Optional[AbstractState]:
         logging.debug(f"Entering state {cls.__name__} from {old_state.__class__.__name__}")
 
     @classmethod

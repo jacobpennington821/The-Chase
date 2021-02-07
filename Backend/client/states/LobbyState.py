@@ -16,7 +16,7 @@ class LobbyState(AbstractState):
 
 class HostingLobbyState(LobbyState):
     @classmethod
-    async def enter_state(cls, client: Client, old_state: AbstractState):
+    async def enter_state(cls, client: Client, old_state: AbstractState) -> Optional[AbstractState]:
         await super().enter_state(client, old_state)
         await client.send({"action": "lobby_hosted", "code": client.current_game.code})
 
@@ -24,6 +24,7 @@ class HostingLobbyState(LobbyState):
     async def action_start_game(cls, msg, client: Client) -> Optional[AbstractState]:
         success = await client.current_game.start()
         if success:
+            # TODO Move this into game to handle itself + queue clients for GAME TIME
             if client.current_game.guests:
                 await asyncio.wait(
                     [guest.change_state(RoundOneStateNotSpotlit()) for guest in client.current_game.guests])

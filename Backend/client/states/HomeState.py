@@ -40,8 +40,8 @@ class HomeState(AbstractState):
             else:
                 await client.send({"status": "failed"})
                 return None
-        except InvalidLobbyJoinRequest as e:
-            logging.error(e)
+        except InvalidLobbyJoinRequest as inv_lobby:
+            logging.error(inv_lobby)
             return None
 
     @staticmethod

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import TYPE_CHECKING, Union
+from typing import Optional, TYPE_CHECKING, Union
 from client.states.HomeState import HomeState
 
 if TYPE_CHECKING:
@@ -23,6 +23,7 @@ class Client:
         self.state: AbstractState = HomeState()
         self.game_handler: GameHandler = game_handler
         self.current_game: Union[Game, None] = None
+        self.current_answer_index: Optional[int] = None
 
     async def handle_string(self, string: str):
         state = await self.state.handle_string(string, self)
@@ -30,11 +31,12 @@ class Client:
         if state is not None:
             await self.change_state(state)
 
-    async def change_state(self, state: AbstractState):
-        await self.state.exit_state(self)
-        old_state = self.state
-        self.state = state
-        await self.state.enter_state(self, old_state)
+    async def change_state(self, state: Optional[AbstractState]):
+        while state is not None:
+            await self.state.exit_state(self)
+            old_state = self.state
+            self.state = state
+            state = await self.state.enter_state(self, old_state)
 
     async def handle_disconnect(self):
         print("Disconnected " + str(self.socket))
