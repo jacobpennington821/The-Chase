@@ -3,7 +3,7 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING, Optional
 
-from client.states.RoundOneState import RoundOneStateNotSpotlit, RoundOneStateSpotlit
+from client.states.RoundOneState import RoundOneStateAnswering
 from client.states.AbstractState import AbstractState
 
 if TYPE_CHECKING:
@@ -24,11 +24,11 @@ class HostingLobbyState(LobbyState):
     async def action_start_game(cls, msg, client: Client) -> Optional[AbstractState]:
         success = await client.current_game.start()
         if success:
-            # TODO Move this into game to handle itself + queue clients for GAME TIME
+            # TODO Move this into game to handle all of this at once / prevent races
             if client.current_game.guests:
                 await asyncio.wait(
-                    [guest.change_state(RoundOneStateNotSpotlit()) for guest in client.current_game.guests])
-            return RoundOneStateSpotlit()
+                    [guest.change_state(RoundOneStateAnswering()) for guest in client.current_game.guests])
+            return RoundOneStateAnswering()
         else:
             logging.error("Can't start game")
             await client.send({"action": "start_game", "status": "failed"})

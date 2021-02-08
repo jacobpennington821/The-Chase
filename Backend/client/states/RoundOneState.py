@@ -14,39 +14,21 @@ from client.states.AbstractState import AbstractState
 class RoundOneState(AbstractState):
     pass
 
-class RoundOneStateNotSpotlit(RoundOneState):
-
-    @classmethod
-    async def enter_state(cls, client: Client, old_state: AbstractState) -> Optional[AbstractState]:
-        await super().enter_state(client, old_state)
-        await client.send({"action": "game_started_not_spotlit"})
-
-class RoundOneStateSpotlit(RoundOneState):
-
-    @classmethod
-    async def enter_state(cls, client: Client, old_state: AbstractState) -> Optional[AbstractState]:
-        await super().enter_state(client, old_state)
-        await client.send({"action": "game_started_spotlit"})
-
-    @classmethod
-    async def action_notify_ready(cls, msg, client: Client):
-        return RoundOneStateAnswering()
-
-RoundOneStateSpotlit.actions = {
-    "notify_ready": RoundOneStateSpotlit.action_notify_ready,
-}
+# CHANGE OF PLAN
+# Everyone will receive the same question at the same time, answer will be revealed at the same time
+# Same goes for round 2 but each person can pick their own offer
 
 class RoundOneStateAnswering(RoundOneState):
 
     @classmethod
     async def round_1_timer_expired(cls, game: Game):
-        await asyncio.wait([client.send({"action": "timer_expired"}) for client in game.clients])
+        await game.send_to_all({"action": "timer_expired"})
         # TODO Change participants state to round 1b + send offers
 
     @classmethod
-    async def get_and_send_question(cls, game: Game):
-        question: Question = await game.question_handler.get_next_question()
-        await game.send_to_all({
+    async def get_and_send_question(cls, client: Client):
+        question: Question = await client.current_game.round_one_module.get_next_question(client)
+        await client.send({
             "action": "round_1_question",
             "question": question.question,
             "answers": question.shuffled_answers,
@@ -58,7 +40,7 @@ class RoundOneStateAnswering(RoundOneState):
         if client.current_game is None:
             logging.error("Tried to enter %s state without being in a game???", cls.__name__)
             return
-        await cls.get_and_send_question(client.current_game)
+        await cls.get_and_send_question(client)
         if not isinstance(old_state, RoundOneStateAnswered):
             client.current_game.reset_round_1_timer(cls.round_1_timer_expired)
 
@@ -85,7 +67,7 @@ class RoundOneStateAnswered(RoundOneState):
     async def enter_state(cls, client: Client, old_state: AbstractState) -> Optional[AbstractState]:
         await super().enter_state(client, old_state)
         current_game = client.current_game
-        await current_game.send_to_all({
+        await client.send({
                 "action": "question_answered",
                 "correct_answer": current_game.question_handler.current_question.correct_index,
                 "given_answer": client.current_answer_index,

@@ -5,6 +5,7 @@ from asyncio.events import TimerHandle
 from typing import Optional, TYPE_CHECKING
 from game.QuestionHandler import QuestionHandler
 from client.states.LobbyState import HostingLobbyState
+from game.RoundOneModule import RoundOneModule
 
 if TYPE_CHECKING:
     from client.Client import Client
@@ -23,6 +24,7 @@ class Game:
         self.round_1_timer: Optional[TimerHandle] = None
         self.question_handler: QuestionHandler = QuestionHandler()
         self.client_round_1_score: dict[Client, int] = {}
+        self.round_one_module: RoundOneModule = RoundOneModule(self)
 
     def join(self, client: Client) -> bool:
         if not self.in_lobby:
@@ -61,6 +63,7 @@ class Game:
     async def start(self) -> bool:
         # Does game need to be a state machine as well? Probably. Is it worth it? Maybe
         self.in_lobby = False
+        self.round_one_module.start_round()
         for client in self.clients:
             self.client_round_1_score[client] = 0
         return True
