@@ -4,12 +4,13 @@ import logging
 
 from typing import Optional, TYPE_CHECKING
 
+from client.states.AbstractState import AbstractState
+
 if TYPE_CHECKING:
     from client.Client import Client
     from game.Game import Game
     from game.Question import Question
 
-from client.states.AbstractState import AbstractState
 
 class RoundOneState(AbstractState):
     pass
@@ -18,12 +19,8 @@ class RoundOneState(AbstractState):
 # Everyone will receive the same question at the same time, answer will be revealed at the same time
 # Same goes for round 2 but each person can pick their own offer
 
-class RoundOneStateAnswering(RoundOneState):
 
-    @classmethod
-    async def round_1_timer_expired(cls, game: Game):
-        await game.send_to_all({"action": "timer_expired"})
-        # TODO Change participants state to round 1b + send offers
+class RoundOneStateAnswering(RoundOneState):
 
     @classmethod
     async def get_and_send_question(cls, client: Client):
@@ -41,8 +38,6 @@ class RoundOneStateAnswering(RoundOneState):
             logging.error("Tried to enter %s state without being in a game???", cls.__name__)
             return
         await cls.get_and_send_question(client)
-        if not isinstance(old_state, RoundOneStateAnswered):
-            client.current_game.reset_round_1_timer(cls.round_1_timer_expired)
 
     @classmethod
     async def action_answer_question(cls, msg, client: Client) -> Optional[AbstractState]:
@@ -53,13 +48,25 @@ class RoundOneStateAnswering(RoundOneState):
             return
         current_question = client.current_game.question_handler.current_question
         if msg["answer_index"] == current_question.correct_index:
-            client.current_game.add_correct_round_1_answer(client)
+            client.current_game.round_one_module.add_correct_answer(client)
         client.current_answer_index = msg["answer_index"]
         return RoundOneStateAnswered()
 
 RoundOneStateAnswering.actions = {
     "answer_question": RoundOneStateAnswering.action_answer_question
 }
+
+class RoundOneStateHostStarting(RoundOneState):
+
+    @classmethod
+    async def round_1_timer_expired(cls, game: Game):
+        await game.send_to_all({"action": "timer_expired"})
+        # TODO Change participants state to round 1b + send offers
+
+    @classmethod
+    async def enter_state(cls, client: Client, old_state: AbstractState) -> Optional[AbstractState]:
+        client.current_game.round_one_module.reset_timer(cls.round_1_timer_expired)
+        return RoundOneStateAnswering()
 
 class RoundOneStateAnswered(RoundOneState):
 
@@ -71,5 +78,5 @@ class RoundOneStateAnswered(RoundOneState):
                 "action": "question_answered",
                 "correct_answer": current_game.question_handler.current_question.correct_index,
                 "given_answer": client.current_answer_index,
-                "round_1_score": current_game.get_client_round_1_score(client)})
+                "round_1_score": current_game.round_one_module.get_client_score(client)})
         return RoundOneStateAnswering()

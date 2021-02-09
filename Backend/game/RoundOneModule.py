@@ -1,4 +1,5 @@
 from __future__ import annotations
+import asyncio
 
 from typing import TYPE_CHECKING
 
@@ -6,6 +7,7 @@ if TYPE_CHECKING:
     from game.Game import Game
     from client.Client import Client
     from game.Question import Question
+    from asyncio import TimerHandle
 
 class RoundOneModule:
 
@@ -17,6 +19,7 @@ class RoundOneModule:
         self.score: dict[Client, int] = {}
         self._question_list: list[Question] = []
         self._client_current_question_index: dict[Client, int] = {}
+        self._timer: Optional[TimerHandle] = None
 
     def start_round(self):
         for client in self._game.clients:
@@ -31,3 +34,15 @@ class RoundOneModule:
         question = self._question_list[current_question_index]
         self._client_current_question_index[client] += 1
         return question
+
+    def reset_timer(self, callback, *args):
+        if self._timer is not None:
+            self._timer.cancel()
+        self._timer = asyncio.get_event_loop().call_later(
+            self.ROUND_ONE_TIMER_LENGTH, asyncio.create_task, callback(self._game, *args))
+
+    def get_client_score(self, client: Client) -> int:
+        return self.score[client]
+
+    def add_correct_answer(self, client: Client):
+        self.score[client] += self.ROUND_ONE_SCORE_PER_QUESTION

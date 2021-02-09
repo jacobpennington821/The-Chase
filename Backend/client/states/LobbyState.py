@@ -3,7 +3,7 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING, Optional
 
-from client.states.RoundOneState import RoundOneStateAnswering
+from client.states.RoundOneState import RoundOneStateAnswering, RoundOneStateHostStarting
 from client.states.AbstractState import AbstractState
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ class HostingLobbyState(LobbyState):
             if client.current_game.guests:
                 await asyncio.wait(
                     [guest.change_state(RoundOneStateAnswering()) for guest in client.current_game.guests])
-            return RoundOneStateAnswering()
+            return RoundOneStateHostStarting()
         else:
             logging.error("Can't start game")
             await client.send({"action": "start_game", "status": "failed"})
