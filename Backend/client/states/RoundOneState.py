@@ -5,6 +5,7 @@ import logging
 from typing import Optional, TYPE_CHECKING
 
 from client.states.AbstractState import AbstractState
+from client.states.RoundTwoState import RoundTwoStateSelectingOffer
 
 if TYPE_CHECKING:
     from client.Client import Client
@@ -62,7 +63,9 @@ class RoundOneStateHostStarting(RoundOneState):
     @classmethod
     async def round_1_timer_expired(cls, game: Game):
         await game.send_to_all({"action": "timer_expired"})
-        # TODO Change participants state to round 1b + send offers
+        if game.guests:
+            await asyncio.wait([guest.change_state(RoundTwoStateSelectingOffer()) for guest in game.guests])
+        await game.host.change_state(RoundTwoStateSelectingOffer())
 
     @classmethod
     async def enter_state(cls, client: Client, old_state: AbstractState) -> Optional[AbstractState]:

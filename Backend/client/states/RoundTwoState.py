@@ -16,4 +16,8 @@ class RoundTwoStateSelectingOffer(RoundTwoState):
         await super().enter_state(client, old_state)
 
 class RoundTwoStateOfferSelected(RoundTwoState):
-    pass
+
+    @classmethod
+    async def enter_state(cls, client: Client, old_state: AbstractState) -> Optional[AbstractState]:
+        await super().enter_state(client, old_state)
+        # We need to wait for all participants here, put a set in roundtwomodule?
