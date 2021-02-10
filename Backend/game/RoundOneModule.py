@@ -1,7 +1,7 @@
 from __future__ import annotations
 import asyncio
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from game.Game import Game
@@ -40,6 +40,12 @@ class RoundOneModule:
             self._timer.cancel()
         self._timer = asyncio.get_event_loop().call_later(
             self.ROUND_ONE_TIMER_LENGTH, asyncio.create_task, callback(self._game, *args))
+
+    @property
+    def time_remaining(self) -> Optional[float]:
+        if self._timer is None or self._timer.cancelled():
+            return None
+        return self._timer.when() - asyncio.get_event_loop().time()
 
     def get_client_score(self, client: Client) -> int:
         return self.score[client]

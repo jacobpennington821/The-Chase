@@ -29,6 +29,7 @@ class RoundOneStateAnswering(RoundOneState):
             "action": "round_1_question",
             "question": question.question,
             "answers": question.shuffled_answers,
+            "time_remaining": client.current_game.round_one_module.time_remaining,
             })
 
     @classmethod
@@ -66,7 +67,12 @@ class RoundOneStateHostStarting(RoundOneState):
     @classmethod
     async def enter_state(cls, client: Client, old_state: AbstractState) -> Optional[AbstractState]:
         client.current_game.round_one_module.reset_timer(cls.round_1_timer_expired)
+        await asyncio.wait(
+            [guest.change_state(RoundOneStateAnswering()) for guest in client.current_game.guests])
         return RoundOneStateAnswering()
+
+class RoundOneStateGuestStarting(RoundOneState):
+    pass
 
 class RoundOneStateAnswered(RoundOneState):
 
