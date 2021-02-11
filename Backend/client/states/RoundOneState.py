@@ -48,7 +48,7 @@ class RoundOneStateAnswering(RoundOneState):
         if client.current_game is None:
             logging.error("Tried to enter %s state without being in a game???", cls.__name__)
             return
-        current_question = client.current_game.question_handler.current_question
+        current_question = client.current_game.round_one_module.client_question[client]
         if msg["answer_index"] == current_question.correct_index:
             client.current_game.round_one_module.add_correct_answer(client)
         client.current_answer_index = msg["answer_index"]

@@ -20,6 +20,7 @@ class RoundOneModule:
         self._question_list: list[Question] = []
         self._client_current_question_index: dict[Client, int] = {}
         self._timer: Optional[TimerHandle] = None
+        self.client_question: dict[Client, Question] = {}
 
     def start_round(self):
         for client in self._game.clients:
@@ -32,6 +33,7 @@ class RoundOneModule:
             question: Question = await self._game.question_handler.get_next_question()
             self._question_list.append(question)
         question = self._question_list[current_question_index]
+        self.client_question[client] = question
         self._client_current_question_index[client] += 1
         return question
 
