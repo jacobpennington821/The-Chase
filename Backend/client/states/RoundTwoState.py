@@ -41,4 +41,7 @@ class RoundTwoStateOfferSelected(RoundTwoState):
         pass
 
 class RoundTwoStateLastOfferSelected(RoundTwoState):
-    pass
+
+    @classmethod
+    async def enter_state(cls, client: Client, old_state: AbstractState) -> Optional[AbstractState]:
+        pass

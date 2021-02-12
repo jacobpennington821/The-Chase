@@ -17,6 +17,7 @@ class RoundTwoModule:
         self._round_one_module: RoundOneModule = game.round_one_module
         self.selected_offers: dict[Client, int] = {}
         self._generated_offers: dict[Client, Tuple[int, int, int]] = {}
+        self.chase_positions: dict[Client, int] = {}
 
     def generate_offer(self, client: Client) -> Tuple[int, int, int]:
         if client in self._generated_offers:
@@ -34,10 +35,10 @@ class RoundTwoModule:
         if offer not in self._generated_offers[client]:
             return False
         self.selected_offers[client] = offer
+        offer_position = self._generated_offers[client].index(offer)
+        self.chase_positions[client] = offer_position + 3
         return True
 
     @property
     def all_clients_submitted(self) -> bool:
-        logging.info(str(set(self._game.clients)))
-        logging.info(str(set(self.selected_offers.keys())))
         return set(self._game.clients) == set(self.selected_offers.keys())
