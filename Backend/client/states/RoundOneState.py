@@ -83,9 +83,10 @@ class RoundOneStateAnswered(RoundOneState):
     async def enter_state(cls, client: Client, old_state: AbstractState) -> Optional[AbstractState]:
         await super().enter_state(client, old_state)
         current_game = client.current_game
+        current_question = current_game.round_one_module.client_question[client]
         await client.send({
                 "action": "question_answered",
-                "correct_answer": current_game.question_handler.current_question.correct_index,
+                "correct_answer": current_question.correct_index,
                 "given_answer": client.current_answer_index,
                 "round_1_score": current_game.round_one_module.get_client_score(client)})
         return RoundOneStateAnswering()

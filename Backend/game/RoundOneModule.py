@@ -52,5 +52,5 @@ class RoundOneModule:
     def get_client_score(self, client: Client) -> int:
         return self.score[client]
 
-    def add_correct_answer(self, client: Client):
+    def add_correct_answer(self, client: Client) -> None:
         self.score[client] += self.ROUND_ONE_SCORE_PER_QUESTION
