@@ -144,3 +144,19 @@ class RoundTwoStateAnswered(RoundTwoState):
             }
         )
         return RoundTwoStateAnswering()
+
+
+class RoundTwoStateWon(RoundTwoState):
+    @classmethod
+    async def enter_state(
+        cls, client: Client, _old_state: AbstractState
+    ) -> Optional[AbstractState]:
+        await client.send({"action": "chase_won"})
+
+
+class RoundTwoStateCaught(RoundTwoState):
+    @classmethod
+    async def enter_state(
+        cls, client: Client, _old_state: AbstractState
+    ) -> Optional[AbstractState]:
+        await client.send({"action": "chase_lost"})

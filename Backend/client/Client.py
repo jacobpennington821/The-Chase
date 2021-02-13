@@ -33,9 +33,15 @@ class Client:
 
     async def change_state(self, state: Optional[AbstractState]):
         while state is not None:
+            logging.debug("Exiting state %s", self.state.__class__.__name__)
             await self.state.exit_state(self)
             old_state = self.state
             self.state = state
+            logging.debug(
+                "Entering state %s from %s",
+                self.state.__class__.__name__,
+                old_state.__class__.__name__,
+            )
             state = await self.state.enter_state(self, old_state)
 
     async def handle_disconnect(self):
@@ -46,8 +52,8 @@ class Client:
         try:
             msg = json.dumps(obj)
             await self.socket.send(msg)
-        except ValueError as e:
-            logging.error("Can't serialise %s" % e)
+        except ValueError as err:
+            logging.error("Can't serialise %s", err)
 
     @property
     def is_hosting_game(self) -> bool:

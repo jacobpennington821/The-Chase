@@ -3,7 +3,10 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING, Optional
 
-from client.states.RoundOneState import RoundOneStateAnswering, RoundOneStateGuestStarting, RoundOneStateHostStarting
+from client.states.RoundOneState import (
+    RoundOneStateGuestStarting,
+    RoundOneStateHostStarting,
+)
 from client.states.AbstractState import AbstractState
 
 if TYPE_CHECKING:
@@ -16,7 +19,9 @@ class LobbyState(AbstractState):
 
 class HostingLobbyState(LobbyState):
     @classmethod
-    async def enter_state(cls, client: Client, old_state: AbstractState) -> Optional[AbstractState]:
+    async def enter_state(
+        cls, client: Client, old_state: AbstractState
+    ) -> Optional[AbstractState]:
         await super().enter_state(client, old_state)
         await client.send({"action": "lobby_hosted", "code": client.current_game.code})
 
@@ -27,7 +32,11 @@ class HostingLobbyState(LobbyState):
             # TODO Move this into game to handle all of this at once / prevent races
             if client.current_game.guests:
                 await asyncio.wait(
-                    [guest.change_state(RoundOneStateGuestStarting()) for guest in client.current_game.guests])
+                    [
+                        guest.change_state(RoundOneStateGuestStarting())
+                        for guest in client.current_game.guests
+                    ]
+                )
             return RoundOneStateHostStarting()
         else:
             logging.error("Can't start game")
@@ -39,9 +48,9 @@ class HostingLobbyState(LobbyState):
         await super().handle_disconnect(client)
         await client.game_handler.host_disconnect(client)
 
-HostingLobbyState.actions = {
-    "start_game": HostingLobbyState.action_start_game
-}
+
+HostingLobbyState.actions = {"start_game": HostingLobbyState.action_start_game}
+
 
 class GuestLobbyState(LobbyState):
     @classmethod
