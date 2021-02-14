@@ -26,7 +26,7 @@ class HostingLobbyState(LobbyState):
         await client.send({"action": "lobby_hosted", "code": client.current_game.code})
 
     @classmethod
-    async def action_start_game(cls, msg, client: Client) -> Optional[AbstractState]:
+    async def action_start_game(cls, _msg, client: Client) -> Optional[AbstractState]:
         success = await client.current_game.start()
         if success:
             # TODO Move this into game to handle all of this at once / prevent races

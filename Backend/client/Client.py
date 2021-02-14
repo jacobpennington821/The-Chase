@@ -45,7 +45,7 @@ class Client:
             state = await self.state.enter_state(self, old_state)
 
     async def handle_disconnect(self):
-        print("Disconnected " + str(self.socket))
+        logging.info("Disconnected %s", str(self.socket))
         await self.state.handle_disconnect(self)
 
     async def send(self, obj):

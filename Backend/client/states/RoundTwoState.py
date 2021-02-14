@@ -4,6 +4,11 @@ from typing import Optional, TYPE_CHECKING
 import asyncio
 import logging
 
+from client.states.RoundThreeState import (
+    RoundThreeStateWaiting,
+    RoundThreeStateSpectating,
+)
+
 if TYPE_CHECKING:
     from client.Client import Client
     from game.Question import Question
@@ -106,12 +111,21 @@ class RoundTwoStateAnswering(RoundTwoState):
                 "Tried to enter %s state without being in a game???", cls.__name__
             )
             return
-        current_question = client.current_game.round_two_module.client_question[client]
+        round_two_module = client.current_game.round_two_module
+        current_question = round_two_module.client_question[client]
         if msg["answer_index"] == current_question.correct_index:
-            client.current_game.round_two_module.add_correct_answer(client)
+            round_two_module.add_correct_answer(client)
         else:
-            client.current_game.round_two_module.add_incorrect_answer(client)
+            round_two_module.add_incorrect_answer(client)
         client.current_answer_index = msg["answer_index"]
+        if round_two_module.has_been_caught(client):
+            if round_two_module.all_clients_finished_chasing:
+                return RoundTwoStateCaughtLast()
+            return RoundTwoStateCaught()
+        if round_two_module.has_beaten_chaser(client):
+            if round_two_module.all_clients_finished_chasing:
+                return RoundTwoStateWonLast()
+            return RoundTwoStateWon()
         return RoundTwoStateAnswered()
 
 
@@ -151,6 +165,7 @@ class RoundTwoStateWon(RoundTwoState):
     async def enter_state(
         cls, client: Client, _old_state: AbstractState
     ) -> Optional[AbstractState]:
+        client.current_game.round_three_module.playing_clients.add(client)
         await client.send({"action": "chase_won"})
 
 
@@ -160,3 +175,43 @@ class RoundTwoStateCaught(RoundTwoState):
         cls, client: Client, _old_state: AbstractState
     ) -> Optional[AbstractState]:
         await client.send({"action": "chase_lost"})
+
+
+class RoundTwoStateLastBase:
+    @classmethod
+    async def start_round_three(cls, client: Client) -> AbstractState:
+        game = client.current_game
+        survived_state_changes = [
+            c.change_state(RoundThreeStateWaiting())
+            for c in client.current_game.round_two_module.successful_clients
+            if c is not client
+        ]
+        caught_state_changes = [
+            c.change_state(RoundThreeStateSpectating())
+            for c in game.round_two_module.eliminated_clients
+            if c is not client
+        ]
+        if survived_state_changes + caught_state_changes:
+            await asyncio.wait(survived_state_changes + caught_state_changes)
+
+        if game.round_two_module.has_beaten_chaser(client):
+            return RoundThreeStateWaiting()
+        return RoundThreeStateSpectating()
+
+
+class RoundTwoStateWonLast(RoundTwoStateWon, RoundTwoStateLastBase):
+    @classmethod
+    async def enter_state(
+        cls, client: Client, old_state: AbstractState
+    ) -> Optional[AbstractState]:
+        await super().enter_state(client, old_state)
+        return await cls.start_round_three(client)
+
+
+class RoundTwoStateCaughtLast(RoundTwoStateCaught, RoundTwoStateLastBase):
+    @classmethod
+    async def enter_state(
+        cls, client: Client, old_state: AbstractState
+    ) -> Optional[AbstractState]:
+        await super().enter_state(client, old_state)
+        return await cls.start_round_three(client)

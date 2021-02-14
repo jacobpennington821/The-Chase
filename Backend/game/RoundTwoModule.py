@@ -25,6 +25,8 @@ class RoundTwoModule:
         self._question_list: list[Question] = []
         self._client_current_question_index: dict[Client, int] = {}
         self.current_chaser_answer_index: dict[Client, int] = {}
+        self.eliminated_clients: set[Client] = set()
+        self.successful_clients: set[Client] = set()
 
     def generate_offer(self, client: Client) -> Tuple[int, int, int]:
         if client in self._generated_offers:
@@ -66,10 +68,14 @@ class RoundTwoModule:
 
     def add_correct_answer(self, client: Client):
         self.player_positions[client] -= 1
+        if self.player_positions[client] < 0:
+            self.successful_clients.add(client)
         self._run_chaser_turn(client)
 
     def add_incorrect_answer(self, client: Client):
         self._run_chaser_turn(client)
+        if self.chaser_positions[client] == self.player_positions[client]:
+            self.eliminated_clients.add(client)
 
     def _run_chaser_turn(self, client: Client):
         question = self.client_question[client]
@@ -90,3 +96,16 @@ class RoundTwoModule:
         self.current_chaser_answer_index[client] = question.shuffled_answers.index(
             chaser_answer
         )
+
+    @property
+    def all_clients_finished_chasing(self) -> bool:
+        assert len(self.eliminated_clients & self.successful_clients) == 0
+        return (self.eliminated_clients | self.successful_clients) == self._game.clients
+
+    def has_been_caught(self, client: Client) -> bool:
+        assert len(self.eliminated_clients & self.successful_clients) == 0
+        return client in self.eliminated_clients
+
+    def has_beaten_chaser(self, client: Client) -> bool:
+        assert len(self.eliminated_clients & self.successful_clients) == 0
+        return client in self.successful_clients

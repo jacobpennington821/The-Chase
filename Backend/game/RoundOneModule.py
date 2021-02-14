@@ -5,9 +5,10 @@ from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from game.Game import Game
-    from client.Client import Client
     from game.Question import Question
+    from client.Client import Client
     from asyncio import TimerHandle
+
 
 class RoundOneModule:
 
@@ -41,7 +42,10 @@ class RoundOneModule:
         if self._timer is not None:
             self._timer.cancel()
         self._timer = asyncio.get_event_loop().call_later(
-            self.ROUND_ONE_TIMER_LENGTH, asyncio.create_task, callback(self._game, *args))
+            self.ROUND_ONE_TIMER_LENGTH,
+            asyncio.create_task,
+            callback(self._game, *args),
+        )
 
     @property
     def time_remaining(self) -> Optional[float]:

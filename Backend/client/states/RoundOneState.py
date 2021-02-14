@@ -70,12 +70,12 @@ class RoundOneStateHostStarting(RoundOneState):
     @classmethod
     async def round_1_timer_expired(cls, game: Game):
         await game.send_to_all({"action": "timer_expired"})
-        guest_state_changes = [
+        state_changes = [
             guest.change_state(RoundTwoStateSelectingOffer()) for guest in game.guests
         ]
-        if guest_state_changes:
-            await asyncio.wait(guest_state_changes)
-        await game.host.change_state(RoundTwoStateSelectingOffer())
+        state_changes.append(game.host.change_state(RoundTwoStateSelectingOffer()))
+        if state_changes:
+            await asyncio.wait(state_changes)
 
     @classmethod
     async def enter_state(

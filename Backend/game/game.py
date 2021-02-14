@@ -6,6 +6,7 @@ from typing import Optional, TYPE_CHECKING
 from game.QuestionHandler import QuestionHandler
 from client.states.LobbyState import HostingLobbyState
 from game.RoundOneModule import RoundOneModule
+from game.RoundThreeModule import RoundThreeModule
 from game.RoundTwoModule import RoundTwoModule
 
 if TYPE_CHECKING:
@@ -22,6 +23,7 @@ class Game:
         self.question_handler: QuestionHandler = QuestionHandler()
         self.round_one_module: RoundOneModule = RoundOneModule(self)
         self.round_two_module: RoundTwoModule = RoundTwoModule(self)
+        self.round_three_module: RoundThreeModule = RoundThreeModule(self)
 
     def join(self, client: Client) -> bool:
         if not self.in_lobby:
