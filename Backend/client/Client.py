@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 from typing import Optional, TYPE_CHECKING, Union
-from client.states.HomeState import HomeState
+from client.states.HomeState import HomeState, UnnamedState
 
 if TYPE_CHECKING:
     from websockets.server import WebSocketServerProtocol
@@ -20,10 +20,11 @@ class Client:
         game_handler: GameHandler,
     ):
         self.socket: WebSocketServerProtocol = socket
-        self.state: AbstractState = HomeState()
+        self.state: AbstractState = UnnamedState()
         self.game_handler: GameHandler = game_handler
         self.current_game: Union[Game, None] = None
         self.current_answer_index: Optional[int] = None
+        self.display_name: Optional[str] = None
 
     async def handle_string(self, string: str):
         state = await self.state.handle_string(string, self)

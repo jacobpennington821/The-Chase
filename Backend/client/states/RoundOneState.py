@@ -34,7 +34,7 @@ class RoundOneStateAnswering(RoundOneState):
 
     @classmethod
     async def enter_state(
-        cls, client: Client, old_state: AbstractState
+        cls, client: Client, _old_state: AbstractState
     ) -> Optional[AbstractState]:
         if client.current_game is None:
             logging.error(
@@ -47,7 +47,7 @@ class RoundOneStateAnswering(RoundOneState):
     async def action_answer_question(
         cls, msg, client: Client
     ) -> Optional[AbstractState]:
-        if "answer_index" not in msg:
+        if "answer_index" not in msg or not isinstance(msg["answer_index"], int):
             return None
         if client.current_game is None:
             logging.error(
@@ -69,11 +69,11 @@ RoundOneStateAnswering.actions = {
 class RoundOneStateHostStarting(RoundOneState):
     @classmethod
     async def round_1_timer_expired(cls, game: Game):
+        # TODO Is this racy? Maybe. Do I care that much? [REDACTED]
         await game.send_to_all({"action": "timer_expired"})
         state_changes = [
-            guest.change_state(RoundTwoStateSelectingOffer()) for guest in game.guests
+            guest.change_state(RoundTwoStateSelectingOffer()) for guest in game.clients
         ]
-        state_changes.append(game.host.change_state(RoundTwoStateSelectingOffer()))
         if state_changes:
             await asyncio.wait(state_changes)
 
@@ -98,7 +98,7 @@ class RoundOneStateGuestStarting(RoundOneState):
 class RoundOneStateAnswered(RoundOneState):
     @classmethod
     async def enter_state(
-        cls, client: Client, old_state: AbstractState
+        cls, client: Client, _old_state: AbstractState
     ) -> Optional[AbstractState]:
         current_game = client.current_game
         current_question = current_game.round_one_module.client_question[client]

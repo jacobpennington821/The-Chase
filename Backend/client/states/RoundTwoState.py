@@ -5,8 +5,10 @@ import asyncio
 import logging
 
 from client.states.RoundThreeState import (
+    RoundThreeStateChasedWaiting,
+    RoundThreeStateChaserWatching,
     RoundThreeStateWaiting,
-    RoundThreeStateSpectating,
+    RoundThreeStateSpectatingWaiting,
 )
 
 if TYPE_CHECKING:
@@ -180,23 +182,59 @@ class RoundTwoStateCaught(RoundTwoState):
 class RoundTwoStateLastBase:
     @classmethod
     async def start_round_three(cls, client: Client) -> AbstractState:
+        # TODO Pretty sure if someone disconnects halfway through this function
+        # The context switch at an await will cause absolute carnage and probably cause a crash
         game = client.current_game
-        survived_state_changes = [
-            c.change_state(RoundThreeStateWaiting())
-            for c in client.current_game.round_two_module.successful_clients
+
+        if not game.round_two_module.successful_clients:
+            all_loss_state_changes = [
+                c.change_state(RoundTwoStateAllLoss())
+                for c in game.clients
+                if c is not client
+            ]
+            await asyncio.wait(all_loss_state_changes)
+            return RoundTwoStateAllLoss()
+
+        if len(game.round_two_module.successful_clients) == 1:
+            one_won_state_changes = [
+                c.change_state(RoundTwoStateOneWinner())
+                for c in game.clients
+                if c is not client
+            ]
+            await asyncio.wait(one_won_state_changes)
+            return RoundTwoStateOneWinner()
+
+        game.round_three_module.split_clients()
+
+        survived_chasers_state_changes = [
+            c.change_state(RoundThreeStateChaserWatching())
+            for c in game.round_three_module.chaser_clients
             if c is not client
         ]
+
+        survived_chased_state_changes = [
+            c.change_state(RoundThreeStateChasedWaiting())
+            for c in game.round_three_module.chased_clients
+            if c is not client
+        ]
+
         caught_state_changes = [
-            c.change_state(RoundThreeStateSpectating())
+            c.change_state(RoundThreeStateSpectatingWaiting())
             for c in game.round_two_module.eliminated_clients
             if c is not client
         ]
-        if survived_state_changes + caught_state_changes:
-            await asyncio.wait(survived_state_changes + caught_state_changes)
 
-        if game.round_two_module.has_beaten_chaser(client):
-            return RoundThreeStateWaiting()
-        return RoundThreeStateSpectating()
+        await asyncio.wait(
+            survived_chased_state_changes
+            + survived_chasers_state_changes
+            + caught_state_changes
+        )
+
+        if client in game.round_three_module.chased_clients:
+            return RoundThreeStateChasedWaiting()
+        if client in game.round_three_module.chaser_clients:
+            return RoundThreeStateChaserWatching()
+        return RoundThreeStateSpectatingWaiting()
 
 
 class RoundTwoStateWonLast(RoundTwoStateWon, RoundTwoStateLastBase):
@@ -215,3 +253,30 @@ class RoundTwoStateCaughtLast(RoundTwoStateCaught, RoundTwoStateLastBase):
     ) -> Optional[AbstractState]:
         await super().enter_state(client, old_state)
         return await cls.start_round_three(client)
+
+
+class RoundTwoStateAllLoss(RoundTwoState):
+    @classmethod
+    async def enter_state(
+        cls, client: Client, _old_state: AbstractState
+    ) -> Optional[AbstractState]:
+        await client.send({"action": "game_over", "state": "all_loss"})
+
+
+class RoundTwoStateOneWinner(RoundTwoState):
+    @classmethod
+    async def enter_state(
+        cls, client: Client, _old_state: AbstractState
+    ) -> Optional[AbstractState]:
+        winning_client = next(
+            iter(client.current_game.round_two_module.successful_clients)
+        )
+        await client.send(
+            {
+                "action": "game_over",
+                "state": "one_winner",
+                "money": client.current_game.round_two_module.selected_offers[
+                    winning_client
+                ],
+            }
+        )

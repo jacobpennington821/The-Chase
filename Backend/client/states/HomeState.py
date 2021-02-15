@@ -14,12 +14,37 @@ from game.Game import Game
 class InvalidLobbyJoinRequest(Exception):
     pass
 
+class UnnamedState(AbstractState):
+
+    @classmethod
+    async def action_set_name(cls, msg, client: Client) -> Optional[AbstractState]:
+        try:
+            name: str = cls.extract_received_name(msg)
+            client.display_name = name
+            return HomeState()
+        except InvalidLobbyJoinRequest as inv_name:
+            logging.error(inv_name)
+            return None
+
+    @staticmethod
+    def extract_received_name(msg) -> str:
+        if "name" not in msg:
+            raise InvalidLobbyJoinRequest("Request did not contain a name.")
+        if not isinstance(msg["name"], str):
+            raise InvalidLobbyJoinRequest("Request's name is not a string.")
+        return msg["name"]
+
+UnnamedState.actions = {
+    "set_name": UnnamedState.action_set_name
+}
 
 class HomeState(AbstractState):
     @classmethod
     async def action_create_lobby(cls, msg, client: Client) -> Optional[AbstractState]:
         code = client.game_handler.room_code_handler.create_new_game_code()
         game = Game(code, client)
+
+
         logging.info(f"Created new lobby, code: {game.code}")
         client.game_handler.add_game(game)
         client.current_game = game
@@ -51,7 +76,6 @@ class HomeState(AbstractState):
         if not isinstance(msg["code"], str):
             raise InvalidLobbyJoinRequest("Request's lobby code isn't a string.")
         return msg["code"]
-
 
 HomeState.actions = {
     "create_lobby": HomeState.action_create_lobby,
