@@ -7,7 +7,6 @@ import logging
 from client.states.RoundThreeState import (
     RoundThreeStateChasedWaiting,
     RoundThreeStateChaserWatching,
-    RoundThreeStateWaiting,
     RoundThreeStateSpectatingWaiting,
 )
 

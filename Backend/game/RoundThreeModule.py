@@ -20,6 +20,7 @@ class RoundThreeModule:
     def __init__(self, game: Game):
         self._game: Game = game
         self.chased_num_questions_correct: int = 0
+        self.chaser_num_questions_correct: int = 0
         self._question_list: list[Question] = []
         self._timer: Optional[TimerHandle] = None
         self.current_question: Optional[Question] = None
@@ -28,6 +29,7 @@ class RoundThreeModule:
         self.ready_chased: set[Client] = set()
         self.chased_clients: set[Client] = set()
         self.chaser_clients: set[Client] = set()
+        self.timer_expired: bool = True
 
     async def get_next_question(self) -> Question:
         question: Question = await self._game.question_handler.get_next_question()
@@ -36,6 +38,7 @@ class RoundThreeModule:
         return question
 
     def reset_timer(self, callback, *args):
+        self.timer_expired = False
         if self._timer is not None:
             self._timer.cancel()
         self._timer = asyncio.get_event_loop().call_later(
@@ -45,13 +48,20 @@ class RoundThreeModule:
         )
 
     @property
-    def chased_time_remaining(self) -> Optional[float]:
+    def time_remaining(self) -> Optional[float]:
         if self._timer is None or self._timer.cancelled():
             return None
         return self._timer.when() - asyncio.get_event_loop().time()
 
     def add_chased_correct_answer(self) -> None:
         self.chased_num_questions_correct += 1
+
+    def add_chaser_correct_answer(self) -> None:
+        self.chaser_num_questions_correct += 1
+
+    @property
+    def have_chasers_caught_chased(self) -> bool:
+        return self.chaser_num_questions_correct >= self.chased_num_questions_correct
 
     @property
     def are_all_chased_clients_ready(self):

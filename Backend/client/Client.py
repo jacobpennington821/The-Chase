@@ -34,11 +34,11 @@ class Client:
 
     async def change_state(self, state: Optional[AbstractState]):
         while state is not None:
-            logging.debug("Exiting state %s", self.state.__class__.__name__)
+            logging.info("Exiting state %s", self.state.__class__.__name__)
             await self.state.exit_state(self)
             old_state = self.state
             self.state = state
-            logging.debug(
+            logging.info(
                 "Entering state %s from %s",
                 self.state.__class__.__name__,
                 old_state.__class__.__name__,
