@@ -10,7 +10,6 @@ if TYPE_CHECKING:
     from client.states.AbstractState import AbstractState
     from game.GameHandler import GameHandler
     from game.Game import Game
-    from game.RoomCodeHandler import RoomCodeHandler
 
 
 class Client:
@@ -27,7 +26,9 @@ class Client:
         self.display_name: Optional[str] = None
 
     async def handle_string(self, string: str):
+        logging.debug("Handling %s", string)
         state = await self.state.handle_string(string, self)
+        logging.debug("Handling %s gave state transition to %s.", string, state.__class__.__name__)
         # If there has been a state transition then do it
         if state is not None:
             await self.change_state(state)

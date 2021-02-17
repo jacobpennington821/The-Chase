@@ -40,6 +40,10 @@ class RoundTwoStateSelectingOffer(RoundTwoState):
             logging.error("Cannot pick an offer without an offer.")
             return None
         client.current_game.round_two_module.pick_offer(client, msg["offer"])
+        logging.debug(
+            "All clients submitted offers? %s",
+            client.current_game.round_two_module.all_clients_submitted,
+        )
         if client.current_game.round_two_module.all_clients_submitted:
             return RoundTwoStateLastOfferSelected()
         return RoundTwoStateOfferSelected()
@@ -114,11 +118,12 @@ class RoundTwoStateAnswering(RoundTwoState):
             return
         round_two_module = client.current_game.round_two_module
         current_question = round_two_module.client_question[client]
-        if msg["answer_index"] == current_question.correct_index:
+        if msg["answer_index"] == current_question.correct_index or True:
             round_two_module.add_correct_answer(client)
         else:
             round_two_module.add_incorrect_answer(client)
         client.current_answer_index = msg["answer_index"]
+        logging.debug("Has beaten chaser: %s", round_two_module.has_been_caught(client))
         if round_two_module.has_been_caught(client):
             if round_two_module.all_clients_finished_chasing:
                 return RoundTwoStateCaughtLast()
@@ -138,7 +143,7 @@ RoundTwoStateAnswering.actions = {
 class RoundTwoStateAnswered(RoundTwoState):
     @classmethod
     async def enter_state(
-        cls, client: Client, old_state: AbstractState
+        cls, client: Client, _old_state: AbstractState
     ) -> Optional[AbstractState]:
         current_game = client.current_game
         current_question = current_game.round_two_module.client_question[client]
@@ -183,6 +188,7 @@ class RoundTwoStateLastBase:
     async def start_round_three(cls, client: Client) -> AbstractState:
         # TODO Pretty sure if someone disconnects halfway through this function
         # The context switch at an await will cause absolute carnage and probably cause a crash
+        logging.debug("Starting round three")
         game = client.current_game
 
         if not game.round_two_module.successful_clients:

@@ -60,23 +60,48 @@ class RoundThreeStateChasedReadyLast(RoundThreeState):
         await game.send_to_all({"action": "chased_timer_expired"})
         # TODO I get the horrible feeling this is racy as well
 
-        # TODO If the chased get 0 then just give up here
+        # If the chased get 0 then just give up here
+        if game.round_three_module.chased_num_questions_correct == 0:
+            chased_state_changes = [
+                c.change_state(RoundThreeStateChasedLost())
+                for c in game.round_three_module.chased_clients
+            ]
+            # Chasers to waiting
+            chaser_state_changes = [
+                c.change_state(RoundThreeStateChaserWon())
+                for c in game.round_three_module.chaser_clients
+            ]
 
-        # Move everyone to the right state
-        # Chased to spectating
-        chased_state_changes = [
-            c.change_state(RoundThreeStateChasedWatching())
-            for c in game.round_three_module.chased_clients
-        ]
-        # Chasers to waiting
-        chaser_state_changes = [
-            c.change_state(RoundThreeStateChaserWaiting())
-            for c in game.round_three_module.chaser_clients
-        ]
+            spectator_state_changes = [
+                c.change_state(RoundThreeStateSpectatorEnd())
+                for c in game.clients
+                if c not in game.round_three_module.chaser_clients
+                and c not in game.round_three_module.chased_clients
+            ]
 
-        if chased_state_changes + chaser_state_changes:
-            await asyncio.wait(chased_state_changes + chaser_state_changes)
-        # Spectators to something idk
+            if chased_state_changes + chaser_state_changes + spectator_state_changes:
+                await asyncio.wait(
+                    chased_state_changes
+                    + chaser_state_changes
+                    + spectator_state_changes
+                )
+
+        else:
+            # Move everyone to the right state
+            # Chased to spectating
+            chased_state_changes = [
+                c.change_state(RoundThreeStateChasedWatching())
+                for c in game.round_three_module.chased_clients
+            ]
+            # Chasers to waiting
+            chaser_state_changes = [
+                c.change_state(RoundThreeStateChaserWaiting())
+                for c in game.round_three_module.chaser_clients
+            ]
+
+            if chased_state_changes + chaser_state_changes:
+                await asyncio.wait(chased_state_changes + chaser_state_changes)
+            # Spectators to something idk
 
     @classmethod
     async def enter_state(
@@ -191,11 +216,33 @@ class RoundThreeStateChasedWatching(RoundThreeState):
 
 
 class RoundThreeStateChasedLost(RoundThreeState):
-    pass
+    @classmethod
+    async def enter_state(
+        cls, client: Client, old_state: AbstractState
+    ) -> Optional[AbstractState]:
+        await client.send(
+            {
+                "action": "game_over",
+                "game_over": "chased_lost",
+                "chased_score": client.current_game.round_three_module.chased_num_questions_correct,
+                "chaser_score": client.current_game.round_three_module.chaser_num_questions_correct,
+            }
+        )
 
 
 class RoundThreeStateChasedWon(RoundThreeState):
-    pass
+    @classmethod
+    async def enter_state(
+        cls, client: Client, old_state: AbstractState
+    ) -> Optional[AbstractState]:
+        await client.send(
+            {
+                "action": "game_over",
+                "game_over": "chased_won",
+                "chased_score": client.current_game.round_three_module.chased_num_questions_correct,
+                "chaser_score": client.current_game.round_three_module.chaser_num_questions_correct,
+            }
+        )
 
 
 class RoundThreeStateChaserWaiting(RoundThreeState):
@@ -354,33 +401,64 @@ class RoundThreeStateChaserAnswered(RoundThreeState):
     async def enter_state(
         cls, client: Client, _old_state: AbstractState
     ) -> Optional[AbstractState]:
-        current_game = client.current_game
-        current_question = current_game.round_three_module.current_question
-        await current_game.send_to_all(
+        game = client.current_game
+        current_question = game.round_three_module.current_question
+        await game.send_to_all(
             {
                 "action": "question_answered",
                 "correct_answer": current_question.correct_index,
                 "given_answer": client.current_answer_index,
-                "chased_score": current_game.round_three_module.chased_num_questions_correct,
-                "round_3_score": current_game.round_three_module.chaser_num_questions_correct,
+                "chased_score": game.round_three_module.chased_num_questions_correct,
+                "round_3_score": game.round_three_module.chaser_num_questions_correct,
             }
         )
 
-        if current_game.round_three_module.have_chasers_caught_chased:
+        if game.round_three_module.have_chasers_caught_chased:
             # Move chasers to victory states
             # Move chased to loss states
-            pass
+            chased_state_changes = [
+                c.change_state(RoundThreeStateChasedLost())
+                for c in game.round_three_module.chased_clients
+                if c is not client
+            ]
+            # Chasers to waiting
+            chaser_state_changes = [
+                c.change_state(RoundThreeStateChaserWon())
+                for c in game.round_three_module.chaser_clients
+                if c is not client
+            ]
 
-        chaser_state_transitions = [
-            c.change_state(RoundThreeStateChaserAnswering())
-            for c in current_game.round_three_module.chased_clients
-            if c is not client
-        ]
-        # Again i know race condition
-        if chaser_state_transitions:
-            await asyncio.wait(chaser_state_transitions)
-        if not client.current_game.round_three_module.timer_expired:
-            return RoundThreeStateChaserAnswering()
+            spectator_state_changes = [
+                c.change_state(RoundThreeStateSpectatorEnd())
+                for c in game.clients
+                if c not in game.round_three_module.chaser_clients
+                and c not in game.round_three_module.chased_clients
+                and c is not client
+            ]
+
+            if chased_state_changes + chaser_state_changes + spectator_state_changes:
+                await asyncio.wait(
+                    chased_state_changes
+                    + chaser_state_changes
+                    + spectator_state_changes
+                )
+            if client in game.round_three_module.chaser_clients:
+                return RoundThreeStateChaserWon()
+            if client in game.round_three_module.chased_clients:
+                return RoundThreeStateChasedLost()
+            return RoundThreeStateSpectatorEnd()
+
+        else:
+            chaser_state_transitions = [
+                c.change_state(RoundThreeStateChaserAnswering())
+                for c in game.round_three_module.chased_clients
+                if c is not client
+            ]
+            # Again i know race condition
+            if chaser_state_transitions:
+                await asyncio.wait(chaser_state_transitions)
+            if not game.round_three_module.timer_expired:
+                return RoundThreeStateChaserAnswering()
 
 
 class RoundThreeStateChaserDidNotAnswer(RoundThreeState):
@@ -388,12 +466,45 @@ class RoundThreeStateChaserDidNotAnswer(RoundThreeState):
 
 
 class RoundThreeStateChaserLost(RoundThreeState):
-    pass
+    @classmethod
+    async def enter_state(
+        cls, client: Client, old_state: AbstractState
+    ) -> Optional[AbstractState]:
+        await client.send(
+            {
+                "action": "game_over",
+                "game_over": "chaser_lost",
+                "chased_score": client.current_game.round_three_module.chased_num_questions_correct,
+                "chaser_score": client.current_game.round_three_module.chaser_num_questions_correct,
+            }
+        )
 
 
 class RoundThreeStateChaserWon(RoundThreeState):
-    pass
+    @classmethod
+    async def enter_state(
+        cls, client: Client, old_state: AbstractState
+    ) -> Optional[AbstractState]:
+        await client.send(
+            {
+                "action": "game_over",
+                "game_over": "chaser_won",
+                "chased_score": client.current_game.round_three_module.chased_num_questions_correct,
+                "chaser_score": client.current_game.round_three_module.chaser_num_questions_correct,
+            }
+        )
 
 
 class RoundThreeStateSpectatorEnd(RoundThreeState):
-    pass
+    @classmethod
+    async def enter_state(
+        cls, client: Client, old_state: AbstractState
+    ) -> Optional[AbstractState]:
+        await client.send(
+            {
+                "action": "game_over",
+                "game_over": "spectator_end",
+                "chased_score": client.current_game.round_three_module.chased_num_questions_correct,
+                "chaser_score": client.current_game.round_three_module.chaser_num_questions_correct,
+            }
+        )

@@ -4,10 +4,9 @@ import websockets
 
 from client.Client import Client
 from game.GameHandler import GameHandler
-from game.RoomCodeHandler import RoomCodeHandler
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 
 class ChaseServer:
