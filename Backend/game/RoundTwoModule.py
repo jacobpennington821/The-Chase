@@ -100,7 +100,13 @@ class RoundTwoModule:
     @property
     def all_clients_finished_chasing(self) -> bool:
         assert len(self.eliminated_clients & self.successful_clients) == 0
-        return (self.eliminated_clients | self.successful_clients) == self._game.clients
+        logging.debug(
+            "Eliminated: %s, Successful: %s, Total: %s",
+            len(self.eliminated_clients),
+            len(self.successful_clients),
+            len(self._game.clients),
+        )
+        return (self.eliminated_clients | self.successful_clients) == set(self._game.clients)
 
     def has_been_caught(self, client: Client) -> bool:
         assert len(self.eliminated_clients & self.successful_clients) == 0
@@ -109,3 +115,6 @@ class RoundTwoModule:
     def has_beaten_chaser(self, client: Client) -> bool:
         assert len(self.eliminated_clients & self.successful_clients) == 0
         return client in self.successful_clients
+
+    def has_finished_chasing(self, client: Client) -> bool:
+        return client in self.eliminated_clients or client in self.successful_clients

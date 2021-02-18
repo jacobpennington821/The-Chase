@@ -37,6 +37,7 @@ class Client:
         while state is not None:
             logging.info("Exiting state %s", self.state.__class__.__name__)
             await self.state.exit_state(self)
+            # FIXME Should we enter an invalid state here????
             old_state = self.state
             self.state = state
             logging.info(

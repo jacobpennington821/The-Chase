@@ -123,15 +123,6 @@ class RoundTwoStateAnswering(RoundTwoState):
         else:
             round_two_module.add_incorrect_answer(client)
         client.current_answer_index = msg["answer_index"]
-        logging.debug("Has beaten chaser: %s", round_two_module.has_been_caught(client))
-        if round_two_module.has_been_caught(client):
-            if round_two_module.all_clients_finished_chasing:
-                return RoundTwoStateCaughtLast()
-            return RoundTwoStateCaught()
-        if round_two_module.has_beaten_chaser(client):
-            if round_two_module.all_clients_finished_chasing:
-                return RoundTwoStateWonLast()
-            return RoundTwoStateWon()
         return RoundTwoStateAnswered()
 
 
@@ -147,22 +138,33 @@ class RoundTwoStateAnswered(RoundTwoState):
     ) -> Optional[AbstractState]:
         current_game = client.current_game
         current_question = current_game.round_two_module.client_question[client]
+        round_two_module = current_game.round_two_module
         await client.send(
             {
                 "action": "question_answered",
                 "correct_answer": current_question.correct_index,
                 "given_answer": client.current_answer_index,
-                "chaser_answer": current_game.round_two_module.current_chaser_answer_index[
+                "chaser_answer": round_two_module.current_chaser_answer_index[
                     client
                 ],
-                "player_position": client.current_game.round_two_module.player_positions[
+                "player_position": round_two_module.player_positions[
                     client
                 ],
-                "chaser_position": client.current_game.round_two_module.chaser_positions[
+                "chaser_position": round_two_module.chaser_positions[
                     client
                 ],
             }
         )
+        logging.debug("Has beaten chaser: %s", round_two_module.has_been_caught(client))
+        logging.debug("All clients finished: %s", round_two_module.all_clients_finished_chasing)
+        if round_two_module.has_been_caught(client):
+            if round_two_module.all_clients_finished_chasing:
+                return RoundTwoStateCaughtLast()
+            return RoundTwoStateCaught()
+        if round_two_module.has_beaten_chaser(client):
+            if round_two_module.all_clients_finished_chasing:
+                return RoundTwoStateWonLast()
+            return RoundTwoStateWon()
         return RoundTwoStateAnswering()
 
 

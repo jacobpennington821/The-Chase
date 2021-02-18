@@ -1,6 +1,6 @@
 from __future__ import annotations
 import asyncio
-from asyncio.events import TimerHandle
+import logging
 
 from typing import Optional, TYPE_CHECKING
 from game.QuestionHandler import QuestionHandler
@@ -57,7 +57,11 @@ class Game:
         return clients
 
     async def send_to_all(self, msg):
-        await asyncio.wait([client.send(msg) for client in self.clients])
+        _, pending = await asyncio.wait([client.send(msg) for client in self.clients])
+        if len(pending) > 0:
+            for pending_action in pending:
+                logging.warning("A send action was still waiting: %s, killing", pending_action)
+                pending_action.cancel()
 
     async def start(self) -> bool:
         # Does game need to be a state machine as well? Probably. Is it worth it? Maybe
