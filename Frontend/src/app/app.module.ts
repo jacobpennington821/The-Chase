@@ -6,12 +6,16 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { RoundOneComponent } from './round-one/round-one.component';
 import { CountdownTimerComponent } from './timer/timer.component';
+import { RoundOneRemoteComponent } from './remote-rounds/round-one-remote/round-one-remote.component';
+import { UnnamedStateComponent } from './client-state/unnamed-state/unnamed-state.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     RoundOneComponent,
     CountdownTimerComponent,
+    RoundOneRemoteComponent,
+    UnnamedStateComponent,
   ],
   imports: [
     BrowserModule,

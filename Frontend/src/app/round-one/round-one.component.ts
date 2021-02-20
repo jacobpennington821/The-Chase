@@ -1,4 +1,5 @@
 import { Component, OnInit, Injectable } from '@angular/core';
+import { ChaseSocketService } from '../chase-socket.service'
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { HttpHeaders } from '@angular/common/http';
 import { CountdownTimerComponent } from '../timer/timer.component';
@@ -24,7 +25,7 @@ export class RoundOneComponent implements OnInit {
   isTimeUp: boolean;
   enableRoundTwo: boolean = false;
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private socketService: ChaseSocketService) {
     this.tallyAmount = 0;
     this.JSON = JSON;
     this.loading = true;
