@@ -1,1 +1,4 @@
-<p>unnamed-state works!</p>
+<form (submit)="onSubmit($event)">
+    <input #nameEntry type="text" name="enterName" placeholder="Enter Name" autofocus [(ngModel)]="playerName" />
+    <button type="submit" #nameEntryButton>Go</button>
+</form>

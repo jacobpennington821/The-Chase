@@ -9,6 +9,7 @@ import { CountdownTimerComponent } from './timer/timer.component';
 import { RoundOneRemoteComponent } from './remote-rounds/round-one-remote/round-one-remote.component';
 import { UnnamedStateComponent } from './client-state/unnamed-state/unnamed-state.component';
 import { SubmittingNameStateComponent } from './client-state/submitting-name-state/submitting-name-state.component';
+import { FormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
@@ -22,7 +23,8 @@ import { SubmittingNameStateComponent } from './client-state/submitting-name-sta
   imports: [
     BrowserModule,
     AppRoutingModule,
-    HttpClientModule
+    HttpClientModule,
+    FormsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

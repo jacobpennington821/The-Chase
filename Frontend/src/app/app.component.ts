@@ -17,6 +17,7 @@ export class AppComponent implements StateSubscriber {
     this.socketService = socketService;
     this.socketService.subscribe(this);
   }
+  
 
   stateUpdated(newState: ClientState): void {
     this.updateView();
@@ -29,6 +30,6 @@ export class AppComponent implements StateSubscriber {
   }
 
   ngAfterViewInit() {
-    this.updateView();
+    window.setTimeout(() => this.updateView(), 0);
   }
 }

@@ -1,14 +1,16 @@
 import { ComponentFactoryResolver, Injectable } from '@angular/core';
 import { webSocket, WebSocketSubject } from "rxjs/webSocket";
+import { ActionRunner } from './action-runner';
 import { ClientState } from './client-state/client-state';
 import { UnnamedStateComponent } from './client-state/unnamed-state/unnamed-state.component';
+import { MessageSender } from './message-sender';
 
 const socketPort = 8484;
 
 @Injectable({
   providedIn: 'root'
 })
-export class ChaseSocketService {
+export class ChaseSocketService implements ActionRunner, MessageSender {
   socket: WebSocketSubject<unknown>;
   state: ClientState;
   subscriber: StateSubscriber | null;
@@ -31,10 +33,17 @@ export class ChaseSocketService {
       () => this.handleClose(),
     );
     this.socket.next({ "action": "hello" });
-    window.setTimeout(() => {
-      this.runAction("submitName", {});
-    }, 1000);
   }
+
+  sendMessage(msg: any): void {
+    if (this.socket.closed) {
+      console.log("Couldn't send, socket closed.")
+      return;
+    }
+    this.socket.next(msg);
+  }
+
+  ngOnInit() { }
 
   private handleMessage(msg: any) {
     console.log("Socket message: " + msg);
@@ -65,7 +74,7 @@ export class ChaseSocketService {
     this.subscriber?.stateUpdated(this.state);
   }
 
-  public subscribe(subscriber: StateSubscriber){
+  public subscribe(subscriber: StateSubscriber) {
     this.subscriber = subscriber;
   }
 }

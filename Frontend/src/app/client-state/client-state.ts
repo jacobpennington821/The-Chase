@@ -1,4 +1,6 @@
 import { ComponentFactory, ComponentFactoryResolver } from "@angular/core";
+import { ActionRunner } from "../action-runner";
+import { MessageSender } from "../message-sender";
 
 export abstract class ClientState {
 
