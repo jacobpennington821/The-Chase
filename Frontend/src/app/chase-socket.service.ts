@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+import { ComponentFactoryResolver, Injectable } from '@angular/core';
 import { webSocket, WebSocketSubject } from "rxjs/webSocket";
 import { ClientState } from './client-state/client-state';
+import { UnnamedStateComponent } from './client-state/unnamed-state/unnamed-state.component';
 
 const socketPort = 8484;
 
@@ -10,9 +11,12 @@ const socketPort = 8484;
 export class ChaseSocketService {
   socket: WebSocketSubject<unknown>;
   state: ClientState;
+  subscriber: StateSubscriber | null;
 
-  constructor() {
-    console.log("Connecting websocket")
+  constructor(private componentFactoryResolver: ComponentFactoryResolver) {
+    console.log("Connecting websocket");
+    this.subscriber = null;
+    this.state = new UnnamedStateComponent(componentFactoryResolver);
     this.socket = webSocket({
       url: "ws://" + window.location.hostname + ":" + socketPort,
       openObserver: {
@@ -27,11 +31,14 @@ export class ChaseSocketService {
       () => this.handleClose(),
     );
     this.socket.next({ "action": "hello" });
+    window.setTimeout(() => {
+      this.runAction("submitName", {});
+    }, 1000);
   }
 
   private handleMessage(msg: any) {
     console.log("Socket message: " + msg);
-    this.state.handleJSON(msg)
+    this.state.handleJSON(msg);
   }
 
   private handleError(err: unknown) {
@@ -55,5 +62,14 @@ export class ChaseSocketService {
       this.state = retState;
       retState = this.state.enterState(oldState);
     }
+    this.subscriber?.stateUpdated(this.state);
   }
+
+  public subscribe(subscriber: StateSubscriber){
+    this.subscriber = subscriber;
+  }
+}
+
+export interface StateSubscriber {
+  stateUpdated(newState: ClientState): void;
 }

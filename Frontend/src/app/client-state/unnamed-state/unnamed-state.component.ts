@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ComponentFactory, ComponentFactoryResolver, OnInit } from '@angular/core';
 import { ClientState, ClientStateAction } from '../client-state';
+import { SubmittingNameStateComponent } from '../submitting-name-state/submitting-name-state.component';
 
 @Component({
   selector: 'app-unnamed-state',
@@ -8,14 +9,23 @@ import { ClientState, ClientStateAction } from '../client-state';
 })
 export class UnnamedStateComponent extends ClientState implements OnInit {
 
-  constructor() {
+  componentFactory: ComponentFactory<ClientState>;
+
+  constructor(private componentFactoryResolver: ComponentFactoryResolver) {
     super();
+    this.componentFactory = this.componentFactoryResolver.resolveComponentFactory(UnnamedStateComponent);
     this.addAction(new ClientStateAction("submitName", (args) => {
-      return null;
+      console.log("SUBMIT NAME");
+      return new SubmittingNameStateComponent(componentFactoryResolver);
     }));
   }
 
   ngOnInit(): void {
+  }
+
+
+  public getComponentFactory(): ComponentFactory<ClientState> {
+    return this.componentFactory;
   }
 
 }

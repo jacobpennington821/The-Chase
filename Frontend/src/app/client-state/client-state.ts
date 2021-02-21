@@ -1,3 +1,5 @@
+import { ComponentFactory, ComponentFactoryResolver } from "@angular/core";
+
 export abstract class ClientState {
 
     actions: Map<string, ClientStateAction>;
@@ -34,6 +36,8 @@ export abstract class ClientState {
     public exitState(): void {
 
     }
+
+    public abstract getComponentFactory(): ComponentFactory<ClientState>;
 }
 
 export class ClientStateAction {
