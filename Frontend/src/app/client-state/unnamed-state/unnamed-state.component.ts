@@ -15,13 +15,13 @@ export class UnnamedStateComponent extends ClientState implements OnInit {
   componentFactory: ComponentFactory<ClientState>;
   playerName: string;
 
-  constructor(private componentFactoryResolver: ComponentFactoryResolver) {
-    super();
+  constructor(private componentFactoryResolver: ComponentFactoryResolver, socketService: ChaseSocketService) {
+    super(socketService);
     this.playerName = "";
     this.componentFactory = this.componentFactoryResolver.resolveComponentFactory(UnnamedStateComponent);
     this.addAction(new ClientStateAction("submitName", (args) => {
-      console.log("SUBMIT NAME");
-      return new SubmittingNameStateComponent(componentFactoryResolver);
+      this.sendMessage({ "action": "set_name", "name": this.playerName })
+      return new SubmittingNameStateComponent(componentFactoryResolver, socketService);
     }));
   }
 
@@ -29,9 +29,10 @@ export class UnnamedStateComponent extends ClientState implements OnInit {
   }
 
   onSubmit(event: unknown) {
+    // TODO Validation is for the weak
     console.log(this.playerName);
     // TODO Theres got to be a better way to do this carcrash
-    // this.socketService.runAction("submitName", { "name": this.playerName });
+    this.socketService.runAction("submitName", { "name": this.playerName });
   }
 
   public getComponentFactory(): ComponentFactory<ClientState> {

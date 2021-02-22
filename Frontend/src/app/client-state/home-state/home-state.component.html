@@ -1,0 +1,5 @@
+<button (click)="runProxiedAction('createLobby', null)">Create Lobby</button>
+<form>
+    <input #joinCodeInput type="text" placeholder="Game Code" autofocus name="joinCodeInput" [(ngModel)]="joinCode" />
+    <button #joinCodeButton type="submit" name="joinLobbyButton">Join Lobby</button>
+</form>

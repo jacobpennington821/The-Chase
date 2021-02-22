@@ -1,12 +1,13 @@
 import { ComponentFactory, ComponentFactoryResolver } from "@angular/core";
 import { ActionRunner } from "../action-runner";
+import { ChaseSocketService } from "../chase-socket.service";
 import { MessageSender } from "../message-sender";
 
 export abstract class ClientState {
 
     actions: Map<string, ClientStateAction>;
 
-    constructor() {
+    constructor(protected socketService: ChaseSocketService) {
         this.actions = new Map<string, ClientStateAction>();
     }
 
@@ -20,6 +21,14 @@ export abstract class ClientState {
 
     protected addAction(action: ClientStateAction) {
         this.actions.set(action.getName(), action);
+    }
+
+    public runProxiedAction(actionName: string, args: any) {
+        this.socketService.runAction(actionName, args);
+    }
+
+    public sendMessage(msg: any){
+        this.socketService.sendMessage(msg);
     }
 
     public runAction(actionName: string, args: any): ClientState | null {

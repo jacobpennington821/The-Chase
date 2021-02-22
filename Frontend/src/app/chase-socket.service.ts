@@ -18,7 +18,7 @@ export class ChaseSocketService implements ActionRunner, MessageSender {
   constructor(private componentFactoryResolver: ComponentFactoryResolver) {
     console.log("Connecting websocket");
     this.subscriber = null;
-    this.state = new UnnamedStateComponent(componentFactoryResolver);
+    this.state = new UnnamedStateComponent(componentFactoryResolver, this);
     this.socket = webSocket({
       url: "ws://" + window.location.hostname + ":" + socketPort,
       openObserver: {
@@ -45,9 +45,13 @@ export class ChaseSocketService implements ActionRunner, MessageSender {
 
   ngOnInit() { }
 
-  private handleMessage(msg: any) {
-    console.log("Socket message: " + msg);
-    this.state.handleJSON(msg);
+  private handleMessage(msg: any): void {
+    console.log(msg);
+    if (!("action" in msg)) {
+      console.log("Malformed event: " + msg)
+      return;
+  }
+    this.runAction(msg["action"], msg);
   }
 
   private handleError(err: unknown) {

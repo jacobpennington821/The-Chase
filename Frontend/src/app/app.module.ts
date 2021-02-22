@@ -10,6 +10,8 @@ import { RoundOneRemoteComponent } from './remote-rounds/round-one-remote/round-
 import { UnnamedStateComponent } from './client-state/unnamed-state/unnamed-state.component';
 import { SubmittingNameStateComponent } from './client-state/submitting-name-state/submitting-name-state.component';
 import { FormsModule } from '@angular/forms';
+import { HomeStateComponent } from './client-state/home-state/home-state.component';
+import { CreatingLobbyStateComponent } from './client-state/creating-lobby-state/creating-lobby-state.component';
 
 @NgModule({
   declarations: [
@@ -19,6 +21,8 @@ import { FormsModule } from '@angular/forms';
     RoundOneRemoteComponent,
     UnnamedStateComponent,
     SubmittingNameStateComponent,
+    HomeStateComponent,
+    CreatingLobbyStateComponent,
   ],
   imports: [
     BrowserModule,

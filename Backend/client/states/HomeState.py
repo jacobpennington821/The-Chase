@@ -1,7 +1,7 @@
 from __future__ import annotations
 import logging
 
-from typing import TYPE_CHECKING, Union
+from typing import Optional, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from client.Client import Client
@@ -14,8 +14,8 @@ from game.Game import Game
 class InvalidLobbyJoinRequest(Exception):
     pass
 
-class UnnamedState(AbstractState):
 
+class UnnamedState(AbstractState):
     @classmethod
     async def action_set_name(cls, msg, client: Client) -> Optional[AbstractState]:
         try:
@@ -34,16 +34,20 @@ class UnnamedState(AbstractState):
             raise InvalidLobbyJoinRequest("Request's name is not a string.")
         return msg["name"]
 
-UnnamedState.actions = {
-    "set_name": UnnamedState.action_set_name
-}
+
+UnnamedState.actions = {"set_name": UnnamedState.action_set_name}
+
 
 class HomeState(AbstractState):
+
     @classmethod
-    async def action_create_lobby(cls, msg, client: Client) -> Optional[AbstractState]:
+    async def enter_state(cls, client: Client, _old_state: AbstractState) -> Optional[AbstractState]:
+        await client.send({"action": "ack_name", "name": client.display_name})
+
+    @classmethod
+    async def action_create_lobby(cls, _msg, client: Client) -> Optional[AbstractState]:
         code = client.game_handler.room_code_handler.create_new_game_code()
         game = Game(code, client)
-
 
         logging.info(f"Created new lobby, code: {game.code}")
         client.game_handler.add_game(game)
@@ -76,6 +80,7 @@ class HomeState(AbstractState):
         if not isinstance(msg["code"], str):
             raise InvalidLobbyJoinRequest("Request's lobby code isn't a string.")
         return msg["code"]
+
 
 HomeState.actions = {
     "create_lobby": HomeState.action_create_lobby,
